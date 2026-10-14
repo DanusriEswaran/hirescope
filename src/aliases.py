@@ -88,3 +88,17 @@ SKILL_DISPLAY = {
 
 # junk tags removed before aliasing
 SKILL_STOPLIST = {"", "not available", "basic", "other", "others", "na", "n/a", "none"}
+# ---- additions (round 2)
+CITY_ALIASES.update({
+    "temp. wfh - kolkata": "Kolkata",
+    "north goa": "Goa",
+    "south goa": "Goa",
+})
+SKILL_DISPLAY.update({"sap": "SAP"})
+
+# Generic Naukri tags that are not specific skills; kept in the data but flagged.
+SKILL_GENERIC = {
+    "analytical", "data", "coding", "development", "management", "operations",
+    "monitoring", "healthcare", "computer science", "cloud", "backend",
+    "consulting", "analytics", "business analyst",
+}

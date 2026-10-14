@@ -4,7 +4,7 @@ from pathlib import Path
 
 from pyspark.sql import SparkSession, Window, functions as F
 
-from aliases import CITY_ALIASES, SKILL_ALIASES, SKILL_DISPLAY, SKILL_STOPLIST
+from aliases import CITY_ALIASES, SKILL_ALIASES, SKILL_DISPLAY, SKILL_GENERIC, SKILL_STOPLIST
 
 ROOT = Path(__file__).resolve().parents[1]
 BRONZE = ROOT / "data" / "bronze" / "job_postings"
@@ -52,7 +52,7 @@ def main():
     sal_min = F.col("salary_min_lpa").cast("double")
     sal_max = F.col("salary_max_lpa").cast("double")
     flag = F.lower(F.trim(F.col("salary_disclosed"))) == "true"
-    valid = F.coalesce(flag & (sal_min > 0) & (sal_max >= sal_min), F.lit(False))
+    valid = F.coalesce(flag & (sal_min >= 1) & (sal_max >= sal_min), F.lit(False))
     df = df.withColumn("salary_valid", valid).withColumn("flag_true", F.coalesce(flag, F.lit(False)))
     df = df.withColumn("skills_n_raw", F.col("skills_count").cast("int"))
 
@@ -85,7 +85,7 @@ def main():
                 F.concat(F.upper(F.substring("skill_key", 1, 1)), F.substring("skill_key", 2, 100)),
             ),
         )
-        .select("job_id", "skill_key", "skill_name")
+        .select("job_id", "skill_key", "skill_name", F.col("skill_key").isin(list(SKILL_GENERIC)).alias("is_generic"))
         .distinct()
     )
     skill_counts = skills.groupBy("job_id").agg(F.count("*").cast("int").alias("skills_count"))
