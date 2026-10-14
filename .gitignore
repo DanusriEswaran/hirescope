@@ -1,0 +1,17 @@
+.venv/
+.env
+data/raw/*
+data/bronze/*
+data/silver/*
+!data/bronze/.gitkeep
+!data/silver/.gitkeep
+!data/raw/.gitkeep
+__pycache__/
+*.pyc
+.DS_Store
+dbt/**/target/
+dbt/**/dbt_packages/
+dbt/**/logs/
+spark-warehouse/
+metastore_db/
+derby.log
