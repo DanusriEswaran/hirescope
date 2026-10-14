@@ -1,0 +1,81 @@
+version: 2
+
+models:
+  - name: stg_jobs
+    description: Staging view over raw.jobs (one row per deduplicated job posting).
+  - name: stg_job_skills
+    description: Staging view over raw.job_skills (one row per job and skill; skill_code is the normalised lowercase skill).
+
+  - name: dim_role
+    description: Role dimension (6 role categories from the source).
+    columns:
+      - name: role_key
+        description: Surrogate key.
+      - name: role_name
+        description: Role category, e.g. Data Engineer.
+
+  - name: dim_location
+    description: Location dimension, one row per cleaned city.
+    columns:
+      - name: location_key
+        description: Surrogate key.
+      - name: city
+        description: City after bracket stripping and alias normalisation (Bangalore -> Bengaluru).
+      - name: is_remote
+        description: True for the "Remote" pseudo-city.
+
+  - name: dim_company
+    description: Company dimension, one row per distinct company name.
+    columns:
+      - name: company_key
+        description: Surrogate key.
+      - name: company_name
+        description: Company name as scraped (trimmed).
+
+  - name: dim_skill
+    description: Skill dimension, one row per normalised skill.
+    columns:
+      - name: skill_key
+        description: Surrogate key.
+      - name: skill_code
+        description: Normalised lowercase skill after alias mapping.
+      - name: skill_name
+        description: Display name.
+      - name: is_generic
+        description: True for generic Naukri tags (e.g. Analytical, Data) that are not specific skills. Dashboards exclude these.
+
+  - name: fact_job_posting
+    description: Fact table, one row per job posting. Experience level, work mode and company size are degenerate attributes kept on the fact.
+    columns:
+      - name: job_id
+        description: Source job id (grain of the table).
+      - name: role_key
+        description: FK to dim_role.
+      - name: location_key
+        description: FK to dim_location.
+      - name: company_key
+        description: FK to dim_company.
+      - name: experience_level
+        description: Fresher, Junior (0-2), Mid (3-5), Senior (6-8) or Lead/Architect (9+).
+      - name: work_mode
+        description: On-site, Hybrid or Remote.
+      - name: company_size_bucket
+        description: Source size bucket. Mid (100-999) is very sparse in this dataset.
+      - name: salary_min_lpa
+        description: Minimum salary in LPA. Null unless the salary is disclosed and valid (about 11% of postings).
+      - name: salary_max_lpa
+        description: Maximum salary in LPA. Same rules as salary_min_lpa.
+      - name: salary_mid_lpa
+        description: Midpoint of min and max in LPA, recomputed in Silver.
+      - name: skills_count
+        description: Number of cleaned skills for the job (includes generic tags).
+
+  - name: bridge_job_skill
+    description: Bridge between fact_job_posting and dim_skill (many-to-many). One row per job and skill.
+
+  - name: mart_job
+    description: Denormalised job table (fact plus dimension names) used by dashboard filters and splits.
+  - name: mart_job_skill
+    description: One row per job-skill with filter columns. Use for top skills, skills by experience and salary by skill. Filter is_generic = false for skill rankings.
+  - name: mart_skill_pairs
+    description: One row per job and pair of non-generic skills (skill_a < skill_b alphabetically by code). Only skills with at least min_skill_postings postings are included. Use for skills-often-asked-together.

@@ -1,0 +1,21 @@
+select
+    job_id,
+    job_title,
+    nullif(trim(company_name), '') as company_name,
+    role_category,
+    city,
+    work_mode,
+    company_size_bucket,
+    experience_level,
+    experience_level_order,
+    experience_min_yrs,
+    experience_max_yrs,
+    salary_min_lpa,
+    salary_max_lpa,
+    salary_mid_lpa,
+    salary_disclosed,
+    skill_domain,
+    skills_count,
+    job_url,
+    batch_id
+from {{ source('raw', 'jobs') }}

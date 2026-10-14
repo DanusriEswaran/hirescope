@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    description: Silver-layer data loaded into Postgres by src/load_postgres.py.
+    tables:
+      - name: jobs
+      - name: job_skills
+      - name: load_metadata

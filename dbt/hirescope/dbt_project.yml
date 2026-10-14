@@ -1,0 +1,24 @@
+name: hirescope
+version: "1.0.0"
+config-version: 2
+profile: hirescope
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  min_skill_postings: 50   # skills with fewer postings are left out of the pairs mart
+
+models:
+  hirescope:
+    staging:
+      +materialized: view
+      +schema: staging
+    core:
+      +materialized: table
+      +schema: core
+    marts:
+      +materialized: table
+      +schema: marts
