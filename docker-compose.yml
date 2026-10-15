@@ -1,3 +1,27 @@
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: docker/airflow/Dockerfile
+  image: hirescope-airflow:latest
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/airflow
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__WEBSERVER__SECRET_KEY: hirescope-dev-secret
+    PYSPARK_PYTHON: /home/airflow/venv/bin/python
+    PYSPARK_DRIVER_PYTHON: /home/airflow/venv/bin/python
+    PG_HOST: postgres
+    PG_PORT: "5432"
+    DBT_PG_HOST: postgres
+    POSTGRES_PORT: "5432"
+    POSTGRES_USER: ${POSTGRES_USER}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    POSTGRES_DB: ${POSTGRES_DB}
+  volumes:
+    - ./airflow/dags:/opt/airflow/dags
+    - ./airflow/logs:/opt/airflow/logs
+    - ./:/opt/project
+
 services:
   postgres:
     image: postgres:16
@@ -35,6 +59,40 @@ services:
       MB_DB_PASS: ${POSTGRES_PASSWORD}
       MB_DB_HOST: postgres
       JAVA_OPTS: -Xmx1g
+
+  airflow-init:
+    <<: *airflow-common
+    container_name: hirescope_airflow_init
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow db migrate &&
+        airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com || true
+    restart: "no"
+
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: hirescope_airflow_web
+    command: webserver
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: hirescope_airflow_scheduler
+    command: scheduler
+    restart: unless-stopped
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
 
 volumes:
   pgdata:

@@ -1,5 +1,5 @@
 """Load Silver Parquet into Postgres schema `raw` (idempotent: truncate + reload)."""
-import json
+import json, os
 import math
 import sys
 from pathlib import Path
@@ -97,8 +97,8 @@ def read_rows(path: Path, cols: list):
 def main() -> None:
     env = load_env()
     conn = psycopg2.connect(
-        host="localhost",
-        port=int(env.get("POSTGRES_PORT", 5432)),
+        host=os.environ.get("PG_HOST", "localhost"),
+        port=int(os.environ.get("PG_PORT", env.get("POSTGRES_PORT", 5432))),
         dbname=env.get("POSTGRES_DB", "hirescope"),
         user=env.get("POSTGRES_USER", "hirescope"),
         password=env.get("POSTGRES_PASSWORD", "hirescope_pw"),

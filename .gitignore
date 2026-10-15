@@ -15,3 +15,5 @@ dbt/**/logs/
 spark-warehouse/
 metastore_db/
 derby.log
+airflow/logs/
+exports/
